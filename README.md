@@ -1,3 +1,9 @@
+ADD: Changed the text to be displayed; got the whole secret message output in a single run.
+TODO: Notice the effect of number of runs on the output obtained. 
+
+
+
+
 # Spectre Attack Example
 Example of using revealed "Spectre" exploit from 2 Jan 2018 (CVE-2017-5753 and CVE-2017-5715)
 
