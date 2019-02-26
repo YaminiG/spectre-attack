@@ -1,0 +1,3 @@
+Both the Meltdown and Spectre attacks use CPU cache as a side channel to steal a protected secret. The
+technique used in this side-channel attack is called FLUSH+RELOAD.
+
