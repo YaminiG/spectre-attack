@@ -1,3 +1,18 @@
-Both the Meltdown and Spectre attacks use CPU cache as a side channel to steal a protected secret. The
+Both the Meltdown and Spectre attacks use CPU cache as a side channel to steal a protected secret. Thei
 technique used in this side-channel attack is called FLUSH+RELOAD.
+The objective of this task is to use the side channel to extract a secret value used by the victim function.
+Assume there is a victim function that uses a secret value as index to load some values from an array. 
+Question: are we assuming that the secret variable is being loaded by the victim function?
+Also
+assume that the secret value cannot be accessed from the outside. Our goal is to use side channels to get this
+secret value. The technique that we will be using is called FLUSH+RELOAD.
+STEP1: Flush the cache to ensure that our array isn't already in the cache. This ensures that we, the adversary, are not cheating.
+
+STEP 2: Invoke the victim function, which accesses one of the array elements based on the value of the secret.
+This action causes the corresponding array element to be cached. 
+
+STEP 3: RELOAD the entire array, and measure the time it takes to reload each element. If one specific
+element’s loading time is fast, it is very likely that element is already in the cache. This element must
+be the one accessed by the victim function. Therefore, we can figure out what the secret value is.`:q
+
 
