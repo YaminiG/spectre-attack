@@ -1,18 +1,57 @@
-Both the Meltdown and Spectre attacks use CPU cache as a side channel to steal a protected secret. Thei
-technique used in this side-channel attack is called FLUSH+RELOAD.
-The objective of this task is to use the side channel to extract a secret value used by the victim function.
-Assume there is a victim function that uses a secret value as index to load some values from an array. 
-Question: are we assuming that the secret variable is being loaded by the victim function?
-Also
-assume that the secret value cannot be accessed from the outside. Our goal is to use side channels to get this
-secret value. The technique that we will be using is called FLUSH+RELOAD.
-STEP1: Flush the cache to ensure that our array isn't already in the cache. This ensures that we, the adversary, are not cheating.
+Spectre attack uses CPU as a side channel to expose a secret key. The technique employed heavily inthis process is FLUSH + RELOAD. 
+To do this, we need to understand how the CPU cache works. The CPU cache is a hardware cache used by the CPU of a computer to reduce the average time it takes to access data from memory. When data is being fetched from the memory, it is usually cached by the CPU so that if this data is used again, the access time is much faster. Therefore, if the CPU needs to access some data, it first looks at the cache. 
 
-STEP 2: Invoke the victim function, which accesses one of the array elements based on the value of the secret.
-This action causes the corresponding array element to be cached. 
+How do we use cache as a side channel?
+We come with the assumption that there is a victim function that uses a secret value as index to load some values from an array. For instance, my secret value is 97 and the so 97 is the start index I use to load my secret string. We also assume that this secret value cannot be accessed from the outside. Our goal is to use side channels to get this value. 
 
-STEP 3: RELOAD the entire array, and measure the time it takes to reload each element. If one specific
-element’s loading time is fast, it is very likely that element is already in the cache. This element must
-be the one accessed by the victim function. Therefore, we can figure out what the secret value is.`:q
+Step 1 : Flush the entire array from the cache memory to make sure that the array is not cached.
+Step 2: Invoke the victim function which accesses one of the array elements based on the value of the secret. This action will cause that array element to be cached.
+Step 3 : Reload the array and measure the time it takes to reload each element. If an element's loading time is fast, it is likely that that paticular element is in the cache and this element must have been the one accessed by the victim function. 
+
+NOTE: This is my observation that for the current scope of this experiment, our secret is loaded ina singular array but just at a secret index location!
+
+An important thing to understand is that caching is done at block level and not byte level. We are only trying to guess a single numeric value that corresponds to the elements of an array. If we siply choose a number from 0 to 255, and access array[k] from that, a block of memory containing this element will be cached. Therefore, adjascent elements will also be cached and we will not be able to infer which of the numbers is that starting index of our secret. To solve this problem,the array is made so large that when caching is done, no two adjascent elements are in the same block. As a result, in a single for loop, we are bound to access the starting index of the secret first. 
+
+Now we will try to understand out of order execution and branch prediction.
+
+Out of order is an optimization technique that allows CPU to maximize the utilization of its execution units. Instead of processing instructions in a sequential order, a CPU executes them in paralell as soon as all the required resources are available. 
+
+Let us consider the code snippet here:
+
+1	data = 0;
+2	if(x<size){
+3	data = data + 5;
+4	}
+
+
+Line 2 involves 2 operations: load the value of size from the memory and compare it with x, Now the important thing to note is that if size is not in the CPU caches, it can take several clock cycles before that value is read. Instead of sitting idle, modern (and dumb) CPUs try to predict the outcome the outcome of the comparison and speculatively execute the branches based on this estimation. Since the execution starts before the comparison is cemented and confirmed, it is out of order. Before the actual execution takes place, CPU stores its current state and the value of the registers (in case it needs to retrace and go back to the original state if the condition is in fact, not met). When the value of size finally arrives, the CPU checks the actual outcome and if the prediction is true, the speculatively performed execution is committed and there is a significant performance gain. 
+If the prediction is wrong, the CPU reverts back to its saved state and the results produced by the out of order execution are discarded as if they never happened. This ensures that we never get a result that we are ideally not supposed to get.
+
+Now we come to the design flaw part of this. The effect on CPU caches. During Out of order (OO), the referenced memory is fetched into a register and also stored in the cache. Most CPUs discard the execution but not its effects to cache. This creates an observable effect that can be observed using spectre.
+
+This task basically, in a loop, trains the CPU to choose the "true" branch of an if statement. Once the CPU is trained, we flush the cache so that size is now only in the main memory and we again invoke the victim function with a value that is bigger than size. This time, getting size from the memory is going to take some time so the predictive algorithm chooses the true execution branch and stores the value of the execution in cache.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
